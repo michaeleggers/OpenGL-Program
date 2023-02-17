@@ -1,0 +1,4 @@
+**/build/*
+**/bin/*
+# For now, exclude dependencies
+**/dependencies/*
