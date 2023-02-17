@@ -5,8 +5,8 @@ ADD_SRC_HEADER_FILES()
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/SDL/include
+	${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/assimp/include
 	${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/
-
 )
 
 add_executable(MainEXE
@@ -24,4 +24,6 @@ target_include_directories(MainEXE
 
 target_link_libraries(MainEXE
 	PUBLIC SDL2
-	PUBLIC SDL2main)
+	PUBLIC SDL2main
+	PUBLIC assimp
+)

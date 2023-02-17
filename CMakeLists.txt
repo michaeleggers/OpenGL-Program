@@ -18,6 +18,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 message("Using SDL2...")
 add_subdirectory(src/dependencies/SDL)
+add_subdirectory(src/dependencies/assimp)
 # include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/dependencies/SDL)
 
 

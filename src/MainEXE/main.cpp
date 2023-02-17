@@ -6,6 +6,8 @@
 #include <glm/ext.hpp>
 #include <glad/glad.h>
 
+#include "me_model_import.h"
+
 static int windowWidth = 800;
 static int windowHeight = 600;
 static std::string basePath;
@@ -111,19 +113,45 @@ int main(int argc, char** argv)
 	/* Load and compile shaders */
 	std::string vert_shader_code = LoadTextFile(basePath + "res/shaders/basic_vert.glsl");
 	std::string frag_shader_code = LoadTextFile(basePath + "res/shaders/basic_frag.glsl");
+	std::string mesh_vert_shader_code = LoadTextFile(basePath + "res/shaders/mesh_vert.glsl");
+	std::string mesh_frag_shader_code = LoadTextFile(basePath + "res/shaders/mesh_frag.glsl");
+
+	/* Load models */
+	Model spitfire = ImportModel(basePath + "res/models/spitfire/scene.gltf");
+	Mesh* testMesh = &spitfire.meshes[0];
+
+	/* Prepare buffers for GL shaders */
+	GLuint dataIndices;
+	glCreateBuffers(1, &dataIndices);
+	glNamedBufferStorage(dataIndices, sizeof(uint32_t) * testMesh->indices.size(), testMesh->indices.data(), 0);
+
+	GLuint dataVertices;
+	glCreateBuffers(1, &dataVertices);
+	glNamedBufferStorage(dataVertices, sizeof(Vertex) * testMesh->vertices.size(), testMesh->vertices.data(), 0);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
+
+	GLuint testMeshVAO;
+	glCreateVertexArrays(1, &testMeshVAO);
+	glBindVertexArray(testMeshVAO);
+	glVertexArrayElementBuffer(testMeshVAO, dataIndices);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
 
 	/* Dummy VAO */
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	
+	/* Basic Shader Program (draw triangle) */
+	GLuint basicShaderProgram = CreateShaderProgram(vert_shader_code, frag_shader_code);
 
-	GLuint shaderProgram = CreateShaderProgram(vert_shader_code, frag_shader_code);
-	glUseProgram(shaderProgram);
+	/* Shader Program for loading meshes */
+	GLuint meshShaderProgram = CreateShaderProgram(mesh_vert_shader_code, mesh_frag_shader_code);
+
+	/* Setup some basic OpenGL Params */
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 	//glClearColor(0.0f, 0.1f, 0.5f, 1.0f);
-	
+
 
 	bool running = true;
 	while (running) {
@@ -137,12 +165,19 @@ int main(int argc, char** argv)
 		}
 
 		/* Render */
-		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		GLfloat color[] = { 0.2, 0.2, 0.2, 1.0 };
-		glClearBufferfv(GL_COLOR, 0, color);
-		glDrawArrays(GL_TRIANGLES,
-			0,
-			3);
+		glClearBufferfv(GL_COLOR | GL_DEPTH, 0, color);
+		//glBindVertexArray(vao);
+		//glUseProgram(basicShaderProgram);
+		//glDrawArrays(GL_TRIANGLES,
+		//	0,
+		//	3);
+
+		glUseProgram(meshShaderProgram);
+		glBindVertexArray(testMeshVAO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dataIndices);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
+		glDrawElements(GL_TRIANGLES, testMesh->indices.size(), GL_UNSIGNED_INT, 0);
 
 		SDL_GL_SwapWindow(sdlWindow);
 	}
