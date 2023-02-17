@@ -11,7 +11,7 @@
 struct Vertex
 {
     glm::vec3 pos;
-    glm::vec3 uv;
+    glm::vec2 uv;
 };
 
 struct Mesh

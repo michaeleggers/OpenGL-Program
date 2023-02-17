@@ -7,10 +7,17 @@
 #include <glad/glad.h>
 
 #include "me_model_import.h"
+#include "camera.h"
 
 static int windowWidth = 800;
 static int windowHeight = 600;
 static std::string basePath;
+
+struct PerFrameData
+{
+	glm::mat4 view;
+	glm::mat4 projection;
+};
 
 std::string LoadTextFile(std::string file)
 {
@@ -120,6 +127,9 @@ int main(int argc, char** argv)
 	Model spitfire = ImportModel(basePath + "res/models/spitfire/scene.gltf");
 	Mesh* testMesh = &spitfire.meshes[0];
 
+	/* Camera */
+	Camera camera = Camera(glm::vec3(0, 0, 10));
+
 	/* Prepare buffers for GL shaders */
 	GLuint dataIndices;
 	glCreateBuffers(1, &dataIndices);
@@ -135,6 +145,13 @@ int main(int argc, char** argv)
 	glBindVertexArray(testMeshVAO);
 	glVertexArrayElementBuffer(testMeshVAO, dataIndices);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
+
+	/* Per frame data */
+	PerFrameData perFrameData{};
+	GLuint perFrameDataBuffer;
+	glCreateBuffers(1, &perFrameDataBuffer);
+	glNamedBufferStorage(perFrameDataBuffer, sizeof(PerFrameData), 0, GL_DYNAMIC_STORAGE_BIT);
+	glBindBufferRange(GL_UNIFORM_BUFFER, 0, perFrameDataBuffer, 0, sizeof(PerFrameData));
 
 	/* Dummy VAO */
 	GLuint vao;
@@ -164,6 +181,10 @@ int main(int argc, char** argv)
 			}
 		}
 
+		perFrameData.view = glm::lookAt(camera.m_Pos, camera.m_Center, camera.m_Up);
+		perFrameData.projection = glm::perspective(90.0f, (float)windowWidth / (float)windowHeight, 0.1f, 1000.0f);
+		glNamedBufferSubData(perFrameDataBuffer, 0, sizeof(PerFrameData), &perFrameData);
+
 		/* Render */
 		GLfloat color[] = { 0.2, 0.2, 0.2, 1.0 };
 		glClearBufferfv(GL_COLOR | GL_DEPTH, 0, color);
@@ -177,7 +198,7 @@ int main(int argc, char** argv)
 		glBindVertexArray(testMeshVAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dataIndices);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
-		glDrawElements(GL_TRIANGLES, testMesh->indices.size(), GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, static_cast<uint32_t>(testMesh->indices.size()), GL_UNSIGNED_INT, 0);
 
 		SDL_GL_SwapWindow(sdlWindow);
 	}
