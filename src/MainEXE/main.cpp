@@ -100,39 +100,30 @@ GLuint CreateShaderProgram(std::string const vertShaderFile, std::string const f
 	return shaderProgram;
 }
 
+#define DOLLY_SPEED			1.0
+#define SLOWDOLLYSPEED		(DOLLY_SPEED * 0.1)
 void UpdateCamera(Camera& camera)
 {
+	float dollySpeed = DOLLY_SPEED;
+	if (keys[SDL_SCANCODE_LSHIFT]) {
+		dollySpeed = SLOWDOLLYSPEED;
+	}
 	if (keys[SDL_SCANCODE_W]) {
-		camera.MoveForward(1.0);
+		camera.MoveForward(dollySpeed);
 	}
 	if (keys[SDL_SCANCODE_S]) {
-		camera.MoveForward(-1.0);
+		camera.MoveForward(-dollySpeed);
 	}
 	if (keys[SDL_SCANCODE_A]) {
-		camera.MoveSide(1.0);
+		camera.MoveSide(dollySpeed);
 	}
 	if (keys[SDL_SCANCODE_D]) {
-		camera.MoveSide(-1.0);
+		camera.MoveSide(-dollySpeed);
 	}
 
-	//if (keys[SDL_SCANCODE_LEFT]) {
-	//	camera.RotateAroundUp(0.01f);
-	//}
-	//if (keys[SDL_SCANCODE_RIGHT]) {
-	//	camera.RotateAroundUp(-0.01f);
-	//}
-	//if (keys[SDL_SCANCODE_UP]) {
-	//	camera.RotateAroundSide(-0.01f);
-	//}
-	//if (keys[SDL_SCANCODE_DOWN]) {
-	//	camera.RotateAroundSide(0.01f);
-	//}
-
-	printf("Old mouse %d, %d\n", mouseInput.oldX, mouseInput.oldY);
-	printf("New mouse %d, %d\n", mouseInput.x, mouseInput.y);
 	if (mouseInput.buttonStates[SDL_BUTTON_LEFT] == SDL_PRESSED) {
-		camera.RotateAroundUp(-mouseInput.dX * 0.007f);			
-		camera.RotateAroundSide(mouseInput.dY * 0.007f);
+		camera.RotateAroundUp(-mouseInput.dX * 0.005f);			
+		camera.RotateAroundSide(mouseInput.dY * 0.005f);
 	}
 }
 
@@ -148,7 +139,7 @@ int main(int argc, char** argv)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-	SDL_Window* sdlWindow = SDL_CreateWindow("OpenGL Program", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, windowWidth, windowHeight, SDL_WINDOW_OPENGL);
+	SDL_Window* sdlWindow = SDL_CreateWindow("OpenGL Program", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 	if (!sdlWindow) {
 		printf("Could not create SDL2 window!\nSDL ERROR: %s\n", SDL_GetError());
 		exit(-1);
@@ -241,6 +232,10 @@ int main(int argc, char** argv)
 		UpdateCamera(camera);
 		mouseInput.dX = 0;
 		mouseInput.dY = 0;
+
+		/* Update Windows params */
+		SDL_GetWindowSize(sdlWindow, &windowWidth, &windowHeight);
+		glViewport(0, 0, windowWidth, windowHeight);
 
 		/* Update per frame data */
 		perFrameData.view = glm::lookAt(camera.m_Pos, camera.m_Center, camera.m_Up);
