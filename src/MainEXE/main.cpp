@@ -23,6 +23,7 @@ struct MouseInputState
 	uint8_t		buttonStates[5]; // see: https://wiki.libsdl.org/SDL2/SDL_MouseButtonEvent#Remarks
 	int32_t		x, y;
 	int32_t		oldX, oldY;
+	int32_t     dX, dY;
 };
 
 static int windowWidth = 800;
@@ -114,24 +115,25 @@ void UpdateCamera(Camera& camera)
 		camera.MoveSide(-1.0);
 	}
 
-	if (keys[SDL_SCANCODE_LEFT]) {
-		camera.RotateAroundUp(0.01f);
-	}
-	if (keys[SDL_SCANCODE_RIGHT]) {
-		camera.RotateAroundUp(-0.01f);
-	}
-	if (keys[SDL_SCANCODE_UP]) {
-		camera.RotateAroundSide(-0.01f);
-	}
-	if (keys[SDL_SCANCODE_DOWN]) {
-		camera.RotateAroundSide(0.01f);
-	}
-	//int32_t mouseDeltaX = mouseInput.x - mouseInput.oldX;
-	//int32_t mouseDeltaY = mouseInput.y - mouseInput.oldY;
-	//if (mouseInput.buttonStates[SDL_BUTTON_LEFT] == SDL_PRESSED) {
-	//	camera.RotateAroundUp(-mouseDeltaX * 0.001f);			
-	//	camera.RotateAroundSide(mouseDeltaY * 0.001f);
+	//if (keys[SDL_SCANCODE_LEFT]) {
+	//	camera.RotateAroundUp(0.01f);
 	//}
+	//if (keys[SDL_SCANCODE_RIGHT]) {
+	//	camera.RotateAroundUp(-0.01f);
+	//}
+	//if (keys[SDL_SCANCODE_UP]) {
+	//	camera.RotateAroundSide(-0.01f);
+	//}
+	//if (keys[SDL_SCANCODE_DOWN]) {
+	//	camera.RotateAroundSide(0.01f);
+	//}
+
+	printf("Old mouse %d, %d\n", mouseInput.oldX, mouseInput.oldY);
+	printf("New mouse %d, %d\n", mouseInput.x, mouseInput.y);
+	if (mouseInput.buttonStates[SDL_BUTTON_LEFT] == SDL_PRESSED) {
+		camera.RotateAroundUp(-mouseInput.dX * 0.007f);			
+		camera.RotateAroundSide(mouseInput.dY * 0.007f);
+	}
 }
 
 int main(int argc, char** argv)
@@ -168,7 +170,7 @@ int main(int argc, char** argv)
 	basePath = SDL_GetBasePath();
 	
 	/* Load models */
-	Model spitfire = ImportModel(basePath + "res/models/knight/pknight_small.obj");
+	Model spitfire = ImportModel(basePath + "res/models/spitfire/scene.gltf");
 	Mesh* testMesh = &spitfire.meshes[0];
 
 	/* Camera */
@@ -222,20 +224,23 @@ int main(int argc, char** argv)
 				keys[event.key.keysym.scancode] = false;
 			}
 
-			mouseInput.oldX = mouseInput.x;
-			mouseInput.oldY = mouseInput.y;
-			mouseInput.x = event.button.x;
-			mouseInput.y = event.button.y;
+			SDL_GetMouseState(&mouseInput.x, &mouseInput.y);
 			if (event.type == SDL_MOUSEBUTTONDOWN) {
 				mouseInput.buttonStates[event.button.button] = SDL_PRESSED;
 			}
 			if (event.type == SDL_MOUSEBUTTONUP) {
 				mouseInput.buttonStates[event.button.button] = SDL_RELEASED;
 			}
+			if (event.type == SDL_MOUSEMOTION) {
+				mouseInput.dX = event.motion.xrel;
+				mouseInput.dY = event.motion.yrel;
+			}			
 		}
 
 		/* Update Camera */
 		UpdateCamera(camera);
+		mouseInput.dX = 0;
+		mouseInput.dY = 0;
 
 		/* Update per frame data */
 		perFrameData.view = glm::lookAt(camera.m_Pos, camera.m_Center, camera.m_Up);
