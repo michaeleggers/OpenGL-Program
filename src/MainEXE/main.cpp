@@ -168,7 +168,7 @@ int main(int argc, char** argv)
 	basePath = SDL_GetBasePath();
 	
 	/* Load models */
-	Model spitfire = ImportModel(basePath + "res/models/knight/pknight_small.obj");
+	Model spitfire = ImportModel(basePath + "res/models/spitfire/scene.gltf");
 	Mesh* testMesh = &spitfire.meshes[0];
 	Vertex cube_vertices[] = {
 		// front
@@ -211,11 +211,11 @@ int main(int argc, char** argv)
 	/* Prepare buffers for GL shaders */
 	GLuint dataIndices;
 	glCreateBuffers(1, &dataIndices);
-	glNamedBufferStorage(dataIndices, sizeof(uint32_t) * indexCount, cube_elements, 0);
+	glNamedBufferStorage(dataIndices, sizeof(uint32_t) * testMesh->indices.size(), testMesh->indices.data(), 0);
 
 	GLuint dataVertices;
 	glCreateBuffers(1, &dataVertices);
-	glNamedBufferStorage(dataVertices, sizeof(Vertex) * vertexCount, cube_vertices, 0);
+	glNamedBufferStorage(dataVertices, sizeof(Vertex) * testMesh->vertices.size(), testMesh->vertices.data(), 0);
 
 	GLuint testMeshVAO;
 	glCreateVertexArrays(1, &testMeshVAO);
@@ -297,9 +297,9 @@ int main(int argc, char** argv)
 		glUseProgram(meshShaderProgram);
 		glBindVertexArray(testMeshVAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dataIndices);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, dataIndices);
-		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
+		//glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
 		 
 		//DrawElementsIndirectCommand drawCmd = {
 		//	testMesh->indices.size(),
@@ -315,7 +315,7 @@ int main(int argc, char** argv)
 		//	0,
 		//	testMesh->indices.size(),
 		//	1);
-		//glDrawArrays(GL_TRIANGLES, 0, testMesh->vertices.size());
+		glDrawArrays(GL_TRIANGLES, 0, testMesh->indices.size());
 
 		SDL_GL_SwapWindow(sdlWindow);
 	}
