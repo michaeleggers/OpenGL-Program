@@ -11,6 +11,13 @@
 #include "me_model_import.h"
 #include "camera.h"
 
+typedef struct {
+	uint32_t  count;
+	uint32_t instanceCount;
+	uint32_t firstIndex;
+	int  baseVertex;
+	uint32_t baseInstance;
+} DrawElementsIndirectCommand;
 
 struct PerFrameData
 {
@@ -161,8 +168,42 @@ int main(int argc, char** argv)
 	basePath = SDL_GetBasePath();
 	
 	/* Load models */
-	Model spitfire = ImportModel(basePath + "res/models/spitfire/scene.gltf");
+	Model spitfire = ImportModel(basePath + "res/models/knight/pknight_small.obj");
 	Mesh* testMesh = &spitfire.meshes[0];
+	Vertex cube_vertices[] = {
+		// front
+		{glm::vec3(-1.0, -1.0,  1.0)},
+		{glm::vec3( 1.0, -1.0,  1.0)},
+		{glm::vec3( 1.0,  1.0,  1.0)},
+		{glm::vec3(-1.0,  1.0,  1.0)},
+		// back
+		{glm::vec3(-1.0, -1.0, -1.0)},
+		{glm::vec3( 1.0, -1.0, -1.0)},
+		{glm::vec3( 1.0,  1.0, -1.0)},
+		{glm::vec3(-1.0,  1.0, -1.0)},
+	};
+	uint32_t cube_elements[] = {
+		// front
+		0, 1, 2,
+		2, 3, 0,
+		// right
+		1, 5, 6,
+		6, 2, 1,
+		// back
+		7, 6, 5,
+		5, 4, 7,
+		// left
+		4, 0, 3,
+		3, 7, 4,
+		// bottom
+		4, 5, 1,
+		1, 0, 4,
+		// top
+		3, 2, 6,
+		6, 7, 3
+	};
+	uint32_t indexCount = sizeof(cube_elements)/sizeof(cube_elements[0]);
+	uint32_t vertexCount = sizeof(cube_vertices)/sizeof(Vertex);
 
 	/* Camera */
 	Camera camera = Camera(glm::vec3(0, 5, 10));
@@ -170,17 +211,17 @@ int main(int argc, char** argv)
 	/* Prepare buffers for GL shaders */
 	GLuint dataIndices;
 	glCreateBuffers(1, &dataIndices);
-	glNamedBufferStorage(dataIndices, sizeof(uint32_t) * testMesh->indices.size(), testMesh->indices.data(), 0);
+	glNamedBufferStorage(dataIndices, sizeof(uint32_t) * indexCount, cube_elements, 0);
 
 	GLuint dataVertices;
 	glCreateBuffers(1, &dataVertices);
-	glNamedBufferStorage(dataVertices, sizeof(Vertex) * testMesh->vertices.size(), testMesh->vertices.data(), 0);
+	glNamedBufferStorage(dataVertices, sizeof(Vertex) * vertexCount, cube_vertices, 0);
 
 	GLuint testMeshVAO;
 	glCreateVertexArrays(1, &testMeshVAO);
 	glBindVertexArray(testMeshVAO);
-	glVertexArrayElementBuffer(testMeshVAO, dataIndices);	
-
+	//glVertexArrayElementBuffer(testMeshVAO, dataIndices);	
+	
 	/* Per frame data */
 	PerFrameData perFrameData{};
 	GLuint perFrameDataBuffer;
@@ -257,7 +298,23 @@ int main(int argc, char** argv)
 		glBindVertexArray(testMeshVAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dataIndices);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
-		glDrawElements(GL_TRIANGLES, static_cast<uint32_t>(testMesh->indices.size()), GL_UNSIGNED_INT, 0);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, dataIndices);
+		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+		 
+		//DrawElementsIndirectCommand drawCmd = {
+		//	testMesh->indices.size(),
+		//	1,
+		//	0,
+		//	0,
+		//	0
+		//};
+		//glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, &drawCmd);
+
+
+		//glDrawArraysInstanced(GL_TRIANGLES,
+		//	0,
+		//	testMesh->indices.size(),
+		//	1);
 		//glDrawArrays(GL_TRIANGLES, 0, testMesh->vertices.size());
 
 		SDL_GL_SwapWindow(sdlWindow);
