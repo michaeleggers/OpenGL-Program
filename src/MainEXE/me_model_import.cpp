@@ -37,6 +37,7 @@ Model ImportModel(const std::string& file)
         aiMesh* aiMesh = scene->mMeshes[meshIdx];
         Mesh mesh{};
         mesh.vertices.resize(aiMesh->mNumVertices);
+        memset(mesh.vertices.data(), 0, mesh.vertices.size()*sizeof(Vertex));
         for (size_t faceIdx = 0; faceIdx < aiMesh->mNumFaces; faceIdx++) {
             aiFace face = aiMesh->mFaces[faceIdx];
             uint32_t idx0 = face.mIndices[0];
@@ -49,6 +50,18 @@ Model ImportModel(const std::string& file)
             v0.pos = glm::vec3(aiv0.x, aiv0.y, aiv0.z);
             v1.pos = glm::vec3(aiv1.x, aiv1.y, aiv1.z);
             v2.pos = glm::vec3(aiv2.x, aiv2.y, aiv2.z);
+            aiVector3D ain0 = aiMesh->mNormals[idx0];
+            aiVector3D ain1 = aiMesh->mNormals[idx1];
+            aiVector3D ain2 = aiMesh->mNormals[idx2];
+            v0.normal = glm::vec3(ain0.x, ain0.y, ain0.z);
+            v1.normal = glm::vec3(ain1.x, ain1.y, ain1.z);
+            v2.normal = glm::vec3(ain2.x, ain2.y, ain2.z);
+            aiVector3D aiuv0 = aiMesh->mTextureCoords[0][idx0];
+            aiVector3D aiuv1 = aiMesh->mTextureCoords[0][idx1];
+            aiVector3D aiuv2 = aiMesh->mTextureCoords[0][idx2];
+            v0.uv = glm::vec2(aiuv0.x, aiuv0.y);
+            v1.uv = glm::vec2(aiuv1.x, aiuv1.y);
+            v2.uv = glm::vec2(aiuv2.x, aiuv2.y);
             mesh.indices.push_back(idx0);
             mesh.indices.push_back(idx1);
             mesh.indices.push_back(idx2);

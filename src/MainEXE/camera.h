@@ -2,9 +2,9 @@
 #define CAMERA_H
 
 #define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 class Camera
 {
@@ -16,7 +16,7 @@ public:
 		m_Up(glm::vec3(0, 1, 0))
 	{
 		m_Forward = glm::normalize(m_Center - m_Pos);
-		glm::vec3 side = glm::normalize(glm::cross(m_Up, m_Forward));
+		glm::vec3 side = glm::normalize(glm::cross(m_Forward, m_Up));
 		glm::quat qUp = glm::angleAxis(0.0f, m_Up);
 		glm::quat qSide = glm::angleAxis(0.0f, side);
 		m_Orientation = qUp * qSide;
