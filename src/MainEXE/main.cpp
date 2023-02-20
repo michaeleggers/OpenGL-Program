@@ -19,6 +19,13 @@ typedef struct {
 	uint32_t baseInstance;
 } DrawElementsIndirectCommand;
 
+typedef  struct {
+	uint32_t count;
+	uint32_t instanceCount;
+	uint32_t first;
+	uint32_t baseInstance;
+} DrawArraysIndirectCommand;
+
 struct PerFrameData
 {
 	glm::mat4 view;
@@ -211,11 +218,45 @@ int main(int argc, char** argv)
 	/* Prepare buffers for GL shaders */
 	GLuint dataIndices;
 	glCreateBuffers(1, &dataIndices);
-	glNamedBufferStorage(dataIndices, sizeof(uint32_t) * testMesh->indices.size(), testMesh->indices.data(), 0);
+	glNamedBufferStorage(dataIndices, sizeof(uint32_t) * spitfire.indexCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
 
 	GLuint dataVertices;
 	glCreateBuffers(1, &dataVertices);
-	glNamedBufferStorage(dataVertices, sizeof(Vertex) * testMesh->vertices.size(), testMesh->vertices.data(), 0);
+	glNamedBufferStorage(dataVertices, sizeof(Vertex) * spitfire.vertexCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
+
+	GLuint instanceIndexOffsets;
+	glCreateBuffers(1, &instanceIndexOffsets);
+	uint32_t instanceIndexOffset = 0;
+	glNamedBufferStorage(instanceIndexOffsets, sizeof(uint32_t) * spitfire.meshes.size(), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	
+	std::vector<DrawArraysIndirectCommand> drawCmds{};
+	uint32_t offset = 0;
+	for (size_t i = 0; i < spitfire.meshes.size(); i++) {
+		Mesh* mesh = &spitfire.meshes[i];
+
+		/* Fill Index Buffer */
+		glNamedBufferSubData(dataIndices, mesh->indexOffset * sizeof(uint32_t), mesh->indices.size() * sizeof(uint32_t), mesh->indices.data());
+
+		/* Fill Vertex Buffer */
+		glNamedBufferSubData(dataVertices, mesh->vertexOffset * sizeof(Vertex), mesh->vertices.size() * sizeof(Vertex), mesh->vertices.data());
+
+		/* Fill Instance Index Offsets Buffer */
+		uint32_t indexOffset = mesh->indexOffset;
+		glNamedBufferSubData(instanceIndexOffsets, i * sizeof(uint32_t), sizeof(uint32_t), &indexOffset);
+
+		/* Draw Commands */
+		offset += mesh->indices.size();
+		DrawArraysIndirectCommand drawCmd{};
+		drawCmd.count = mesh->indices.size();
+		drawCmd.instanceCount = 1;
+		drawCmd.first = 0; // Offset into index-buffer?
+		drawCmd.baseInstance = 0;
+		drawCmds.push_back(drawCmd);
+	}
+	GLuint drawBuffer;
+	glCreateBuffers(1, &drawBuffer);
+	glNamedBufferStorage(drawBuffer, drawCmds.size() * sizeof(DrawArraysIndirectCommand), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferSubData(drawBuffer, 0, drawCmds.size() * sizeof(DrawArraysIndirectCommand), drawCmds.data());
 
 	GLuint testMeshVAO;
 	glCreateVertexArrays(1, &testMeshVAO);
@@ -299,6 +340,7 @@ int main(int argc, char** argv)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dataIndices);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, dataIndices);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, instanceIndexOffsets);
 		//glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
 		 
 		//DrawElementsIndirectCommand drawCmd = {
@@ -315,7 +357,15 @@ int main(int argc, char** argv)
 		//	0,
 		//	testMesh->indices.size(),
 		//	1);
-		glDrawArrays(GL_TRIANGLES, 0, testMesh->indices.size());
+		// 
+		//glDrawArrays(GL_TRIANGLES, 0, testMesh->indices.size());
+
+		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, drawBuffer);
+		//glMultiDrawArraysIndirect(GL_TRIANGLES, 0, spitfire.meshes.size(), 0);
+		//glMultiDrawArraysIndirect(GL_TRIANGLES, 0, drawCmds.size(), 0);
+		glMultiDrawArraysIndirect(GL_TRIANGLES, 0, drawCmds.size(), 0);
+
+
 
 		SDL_GL_SwapWindow(sdlWindow);
 	}

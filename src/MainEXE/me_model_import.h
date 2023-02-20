@@ -19,6 +19,8 @@ struct Mesh
 {
     std::vector<Vertex>     vertices;
     std::vector<uint32_t>   indices;
+    uint32_t                vertexOffset;
+    uint32_t                indexOffset;
 };
 
 struct Model

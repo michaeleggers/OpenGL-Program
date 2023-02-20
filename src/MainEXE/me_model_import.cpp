@@ -62,16 +62,18 @@ Model ImportModel(const std::string& file)
             v0.uv = glm::vec2(aiuv0.x, aiuv0.y);
             v1.uv = glm::vec2(aiuv1.x, aiuv1.y);
             v2.uv = glm::vec2(aiuv2.x, aiuv2.y);
-            mesh.indices.push_back(idx0);
-            mesh.indices.push_back(idx1);
-            mesh.indices.push_back(idx2);
+            mesh.indices.push_back(idx0 + model.vertexCount);
+            mesh.indices.push_back(idx1 + model.vertexCount);
+            mesh.indices.push_back(idx2 + model.vertexCount);
             mesh.vertices[idx0] = v0;
             mesh.vertices[idx1] = v1;
             mesh.vertices[idx2] = v2;
         }
-        model.meshes.push_back(mesh);
+        mesh.indexOffset = model.indexCount;
+        mesh.vertexOffset = model.vertexCount;
         model.indexCount += mesh.indices.size();
         model.vertexCount += mesh.vertices.size();
+        model.meshes.push_back(mesh);
     }
 
     // We're done. Everything will be cleaned up by the importer destructor
