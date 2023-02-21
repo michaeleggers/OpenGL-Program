@@ -21,6 +21,7 @@ struct Mesh
     std::vector<uint32_t>   indices;
     uint32_t                vertexOffset;
     uint32_t                indexOffset;
+    std::string             diffuseTexturePath;
 };
 
 struct Model

@@ -31,12 +31,24 @@ Model ImportModel(const std::string& file)
         exit(-1);
     }
 
+    // Get texture names
+    std::vector<std::string> diffuseTexturePaths;
+    for (size_t i = 0; i < scene->mNumMaterials; i++) {
+        aiString path;
+        aiReturn texFound = scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+        if (texFound == aiReturn_SUCCESS) {
+            diffuseTexturePaths.push_back(path.C_Str());
+            printf("AssImp: Diffuse Texture found: %s\n", path.C_Str());
+        }
+    }
+
     // Now we can access the file's contents.
     Model model{};
     for (size_t meshIdx = 0; meshIdx < scene->mNumMeshes; meshIdx++) {
         aiMesh* aiMesh = scene->mMeshes[meshIdx];
         Mesh mesh{};
         mesh.vertices.resize(aiMesh->mNumVertices);
+        mesh.diffuseTexturePath = diffuseTexturePaths[aiMesh->mMaterialIndex];
         memset(mesh.vertices.data(), 0, mesh.vertices.size()*sizeof(Vertex));
         for (size_t faceIdx = 0; faceIdx < aiMesh->mNumFaces; faceIdx++) {
             aiFace face = aiMesh->mFaces[faceIdx];

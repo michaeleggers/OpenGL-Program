@@ -15,6 +15,7 @@ add_executable(MainEXE
 	${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/glad/glad.c
 	${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/glad/KHR/khrplatform.h
 	${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/glad/glad/glad.h
+	${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/stb/stb_image.h
 )
 	
 target_include_directories(MainEXE

@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <string>
 
@@ -11,20 +12,30 @@
 #include "me_model_import.h"
 #include "camera.h"
 
-typedef struct {
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+
+struct DrawElementsIndirectCommand {
 	uint32_t  count;
 	uint32_t instanceCount;
 	uint32_t firstIndex;
 	int  baseVertex;
 	uint32_t baseInstance;
-} DrawElementsIndirectCommand;
+};
 
-typedef  struct {
+struct DrawArraysIndirectCommand {
 	uint32_t count;
 	uint32_t instanceCount;
 	uint32_t first;
 	uint32_t baseInstance;
-} DrawArraysIndirectCommand;
+};
+
+struct DrawData {
+	uint32_t indexOffset;
+	uint32_t vertexOffset;
+	uint32_t materialID;
+	uint32_t transformID;
+};
 
 struct PerFrameData
 {
@@ -176,7 +187,26 @@ int main(int argc, char** argv)
 	
 	/* Load models */
 	Model spitfire = ImportModel(basePath + "res/models/spitfire/scene.gltf");
-	Mesh* testMesh = &spitfire.meshes[0];
+	
+	/* Load Textures */
+	//    int x,y,n;
+	//    unsigned char *data = stbi_load(filename, &x, &y, &n, 0);
+	for (size_t i = 0; i < spitfire.meshes.size(); i++) {
+		std::string diffuseTexturePath = basePath + "res/models/spitfire/" + spitfire.meshes[i].diffuseTexturePath;
+		int x,y,n;
+		unsigned char *data = stbi_load(diffuseTexturePath.c_str(), &x, &y, &n, 4);
+		GLuint diffuseTexture;
+		glCreateTextures(GL_TEXTURE_2D, 1, &diffuseTexture);
+		glTextureParameteri(diffuseTexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTextureParameteri(diffuseTexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTextureStorage2D(diffuseTexture, 1, GL_RGBA8, x, y);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTextureSubImage2D(diffuseTexture, 0, 0, 0, x, y, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		//uint64_t textureHandle = glGetTextureHandleARB(diffuseTexture);
+		stbi_image_free(data);
+	}
+
+
 	Vertex cube_vertices[] = {
 		// front
 		{glm::vec3(-1.0, -1.0,  1.0)},
@@ -224,10 +254,9 @@ int main(int argc, char** argv)
 	glCreateBuffers(1, &dataVertices);
 	glNamedBufferStorage(dataVertices, sizeof(Vertex) * spitfire.vertexCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
 
-	GLuint instanceIndexOffsets;
-	glCreateBuffers(1, &instanceIndexOffsets);
-	uint32_t instanceIndexOffset = 0;
-	glNamedBufferStorage(instanceIndexOffsets, sizeof(uint32_t) * spitfire.meshes.size(), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	GLuint drawDataBuffer;
+	glCreateBuffers(1, &drawDataBuffer);
+	glNamedBufferStorage(drawDataBuffer, sizeof(DrawData) * spitfire.meshes.size(), nullptr, GL_DYNAMIC_STORAGE_BIT);
 	
 	std::vector<DrawArraysIndirectCommand> drawCmds{};
 	uint32_t offset = 0;
@@ -240,9 +269,14 @@ int main(int argc, char** argv)
 		/* Fill Vertex Buffer */
 		glNamedBufferSubData(dataVertices, mesh->vertexOffset * sizeof(Vertex), mesh->vertices.size() * sizeof(Vertex), mesh->vertices.data());
 
-		/* Fill Instance Index Offsets Buffer */
-		uint32_t indexOffset = mesh->indexOffset;
-		glNamedBufferSubData(instanceIndexOffsets, i * sizeof(uint32_t), sizeof(uint32_t), &indexOffset);
+		/* Fill DrawData buffer with actual draw data */
+		DrawData dd = {
+			mesh->indexOffset,	// indexOffset;
+			mesh->vertexOffset,	// vertexOffset;
+			0,					// materialID;
+			0					// transformID;
+		};
+		glNamedBufferSubData(drawDataBuffer, i * sizeof(DrawData), sizeof(DrawData), &dd);
 
 		/* Draw Commands */
 		offset += mesh->indices.size();
@@ -250,7 +284,7 @@ int main(int argc, char** argv)
 		drawCmd.count = mesh->indices.size();
 		drawCmd.instanceCount = 1;
 		drawCmd.first = 0; // Offset into index-buffer?
-		drawCmd.baseInstance = 0;
+		drawCmd.baseInstance = i;
 		drawCmds.push_back(drawCmd);
 	}
 	GLuint drawBuffer;
@@ -340,7 +374,7 @@ int main(int argc, char** argv)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dataIndices);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, dataIndices);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, instanceIndexOffsets);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, drawDataBuffer);
 		//glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
 		 
 		//DrawElementsIndirectCommand drawCmd = {
