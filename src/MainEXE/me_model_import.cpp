@@ -1,5 +1,3 @@
-#include "me_model_import.h"
-
 #include <assimp/Importer.hpp>      // C++ importer interface
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing flags
@@ -9,36 +7,43 @@
 #include <string>
 #include <vector>
 
+#include "me_model_import.h"
+#include "me_Material.h"
 
-Model ImportModel(const std::string& file)
+Model ImportModel(MaterialManager& materialManager, const std::string& path)
 {
     // Create an instance of the Importer class
     Assimp::Importer importer;
 
+    std::string gltfFile = path + "scene.gltf";
     // And have it read the given file with some example postprocessing
     // Usually - if speed is not the most important aspect for you - you'll
     // probably to request more postprocessing than we do in this example.
-    const aiScene* scene = importer.ReadFile(file,
+    const aiScene* scene = importer.ReadFile(gltfFile,
         aiProcess_CalcTangentSpace |
         aiProcess_Triangulate |
         aiProcess_JoinIdenticalVertices |
-        aiProcess_SortByPType);
+        aiProcess_SortByPType |
+        aiProcess_FlipUVs);
 
     // If the import failed, report it
     if (nullptr == scene) {
-        printf("Error importing: %s\nAssImp: %s\n", file.c_str(), importer.GetErrorString());
+        printf("Error importing: %s\nAssImp: %s\n", gltfFile.c_str(), importer.GetErrorString());
         getchar();
         exit(-1);
     }
 
     // Get texture names
-    std::vector<std::string> diffuseTexturePaths;
     for (size_t i = 0; i < scene->mNumMaterials; i++) {
-        aiString path;
-        aiReturn texFound = scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+        aiString texturePath;
+        aiReturn texFound = scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath);
+        std::string diffuseTexture{};
         if (texFound == aiReturn_SUCCESS) {
-            diffuseTexturePaths.push_back(path.C_Str());
-            printf("AssImp: Diffuse Texture found: %s\n", path.C_Str());
+            diffuseTexture = path + texturePath.C_Str();
+            printf("AssImp: Diffuse Texture found: %s\n", diffuseTexture.c_str());
+        }
+        if (!diffuseTexture.empty()) {
+            materialManager.Create(diffuseTexture);
         }
     }
 
@@ -48,7 +53,7 @@ Model ImportModel(const std::string& file)
         aiMesh* aiMesh = scene->mMeshes[meshIdx];
         Mesh mesh{};
         mesh.vertices.resize(aiMesh->mNumVertices);
-        mesh.diffuseTexturePath = diffuseTexturePaths[aiMesh->mMaterialIndex];
+        mesh.materialID = aiMesh->mMaterialIndex; // TODO: Might differ from material mangers material ID!
         memset(mesh.vertices.data(), 0, mesh.vertices.size()*sizeof(Vertex));
         for (size_t faceIdx = 0; faceIdx < aiMesh->mNumFaces; faceIdx++) {
             aiFace face = aiMesh->mFaces[faceIdx];

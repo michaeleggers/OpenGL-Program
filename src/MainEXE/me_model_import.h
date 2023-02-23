@@ -8,6 +8,8 @@
 
 #include <glm/glm.hpp>
 
+#include "me_Material.h"
+
 struct Vertex
 {
     glm::vec3 pos;
@@ -21,7 +23,7 @@ struct Mesh
     std::vector<uint32_t>   indices;
     uint32_t                vertexOffset;
     uint32_t                indexOffset;
-    std::string             diffuseTexturePath;
+    uint32_t                materialID;
 };
 
 struct Model
@@ -32,6 +34,6 @@ struct Model
 };
 
 
-Model ImportModel(const std::string& file);
+Model ImportModel(MaterialManager& materialManager, const std::string& path);
 
 #endif

@@ -10,10 +10,10 @@
 #include <glad/glad.h>
 
 #include "me_model_import.h"
+#include "me_IO.h"
+#include "me_Material.h"
 #include "camera.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
 
 struct DrawElementsIndirectCommand {
 	uint32_t  count;
@@ -58,22 +58,6 @@ static std::string basePath;
 bool				keys[SDL_NUM_SCANCODES];
 MouseInputState		mouseInput;
 
-std::string LoadTextFile(std::string file)
-{
-	SDL_RWops* rwOps = SDL_RWFromFile(file.c_str(), "r");
-	if (!rwOps) {
-		printf("Failed to read file %s.\nSDL ERROR: %s\n", file.c_str(), SDL_GetError());
-		exit(-1);
-	}
-	Sint64 fileSize = rwOps->size(rwOps);
-	std::string data{};
-	data.resize(fileSize);
-	size_t bytesRead = SDL_RWread(rwOps, &data[0], fileSize, 1);
-
-	SDL_RWclose(rwOps);
-
-	return data;
-}
 
 GLuint CreateShader(std::string shaderFile, GLenum shaderType)
 {
@@ -185,27 +169,11 @@ int main(int argc, char** argv)
 	/* Init path for loading resources */
 	basePath = SDL_GetBasePath();
 	
-	/* Load models */
-	Model spitfire = ImportModel(basePath + "res/models/spitfire/scene.gltf");
-	
-	/* Load Textures */
-	//    int x,y,n;
-	//    unsigned char *data = stbi_load(filename, &x, &y, &n, 0);
-	for (size_t i = 0; i < spitfire.meshes.size(); i++) {
-		std::string diffuseTexturePath = basePath + "res/models/spitfire/" + spitfire.meshes[i].diffuseTexturePath;
-		int x,y,n;
-		unsigned char *data = stbi_load(diffuseTexturePath.c_str(), &x, &y, &n, 4);
-		GLuint diffuseTexture;
-		glCreateTextures(GL_TEXTURE_2D, 1, &diffuseTexture);
-		glTextureParameteri(diffuseTexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTextureParameteri(diffuseTexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTextureStorage2D(diffuseTexture, 1, GL_RGBA8, x, y);
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		glTextureSubImage2D(diffuseTexture, 0, 0, 0, x, y, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		//uint64_t textureHandle = glGetTextureHandleARB(diffuseTexture);
-		stbi_image_free(data);
-	}
+	/* Material Storage */
+	MaterialManager materialManager(basePath);
 
+	/* Load models */
+	Model spitfire = ImportModel(materialManager, basePath + "res/models/spitfire/");	
 
 	Vertex cube_vertices[] = {
 		// front
@@ -254,10 +222,20 @@ int main(int argc, char** argv)
 	glCreateBuffers(1, &dataVertices);
 	glNamedBufferStorage(dataVertices, sizeof(Vertex) * spitfire.vertexCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
 
+	GLuint materialBuffer;
+	glCreateBuffers(1, &materialBuffer);
+	glNamedBufferStorage(materialBuffer, sizeof(Material) * materialManager.m_Materials.size(), nullptr, GL_DYNAMIC_STORAGE_BIT);
+
 	GLuint drawDataBuffer;
 	glCreateBuffers(1, &drawDataBuffer);
 	glNamedBufferStorage(drawDataBuffer, sizeof(DrawData) * spitfire.meshes.size(), nullptr, GL_DYNAMIC_STORAGE_BIT);
 	
+	/* Upload Materials */
+	for (size_t i = 0; i < materialManager.m_Materials.size(); i++) {
+		Material material = materialManager.m_Materials[i];
+		glNamedBufferSubData(materialBuffer, i * sizeof(Material), sizeof(Material), &material);
+	}
+
 	std::vector<DrawArraysIndirectCommand> drawCmds{};
 	uint32_t offset = 0;
 	for (size_t i = 0; i < spitfire.meshes.size(); i++) {
@@ -273,7 +251,7 @@ int main(int argc, char** argv)
 		DrawData dd = {
 			mesh->indexOffset,	// indexOffset;
 			mesh->vertexOffset,	// vertexOffset;
-			0,					// materialID;
+			mesh->materialID,	// materialID;
 			0					// transformID;
 		};
 		glNamedBufferSubData(drawDataBuffer, i * sizeof(DrawData), sizeof(DrawData), &dd);
@@ -375,6 +353,8 @@ int main(int argc, char** argv)
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, dataIndices);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, drawDataBuffer);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, materialBuffer);
+
 		//glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
 		 
 		//DrawElementsIndirectCommand drawCmd = {
