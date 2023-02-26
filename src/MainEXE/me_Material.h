@@ -4,14 +4,16 @@
 #include <string>
 #include <vector>
 
+//#pragma pack(push, 1)
 struct Material
 {
 	uint64_t GL_DiffuseTextureHandle;
 	uint64_t GL_OpacityTextureHandle;
-	bool	 hasDiffuseTextureHandle;
-	bool	 hasOpacityTextureHandle;
-	//float    opacity;
+	uint32_t hasDiffuseTextureHandle;
+	uint32_t hasOpacityTextureHandle;
+	float    opacity;
 };
+//#pragma pack(pop)
 
 class MaterialManager
 {

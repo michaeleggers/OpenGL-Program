@@ -35,14 +35,14 @@ MaterialManager::MaterialManager(std::string basePath) {
 uint32_t MaterialManager::Create(std::string diffuseTexturePath, float opacity, std::string opacityMapPath) {	
 	Material material{};
 	if (!diffuseTexturePath.empty()) {
-		material.hasDiffuseTextureHandle = true;
+		material.hasDiffuseTextureHandle = 1;
 		material.GL_DiffuseTextureHandle = uploadTexture(diffuseTexturePath);
 	}
 	if (!opacityMapPath.empty()) {
-		material.hasOpacityTextureHandle = true;
+		material.hasOpacityTextureHandle = 1;
 		material.GL_OpacityTextureHandle = uploadTexture(opacityMapPath);		
 	} 
-	//material.opacity = opacity;
+	material.opacity = opacity;
 	m_Materials.push_back(material);
 
 	return m_Materials.size() - 1; // TODO: What if there is something like Delete()? Then the next ID wouldn not be the last entry.
