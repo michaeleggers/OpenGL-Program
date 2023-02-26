@@ -34,17 +34,31 @@ Model ImportModel(MaterialManager& materialManager, const std::string& path)
     }
 
     // Get texture names
+    aiTextureType texturesToLoad[] = {
+        aiTextureType_DIFFUSE,
+        aiTextureType_OPACITY
+    };
     for (size_t i = 0; i < scene->mNumMaterials; i++) {
-        aiString texturePath;
-        aiReturn texFound = scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath);
+        
         std::string diffuseTexture{};
-        if (texFound == aiReturn_SUCCESS) {
-            diffuseTexture = path + texturePath.C_Str();
-            printf("AssImp: Diffuse Texture found: %s\n", diffuseTexture.c_str());
-        }
-        if (!diffuseTexture.empty()) {
-            materialManager.Create(diffuseTexture);
-        }
+        float opacity = 1.0f;
+        std::string opacityTexture{};
+        for (size_t texCount = 0; texCount < 2; texCount++) {
+            aiString texturePath;
+            aiReturn texFound = scene->mMaterials[i]->GetTexture(texturesToLoad[texCount], 0, &texturePath);
+            if (texFound == aiReturn_SUCCESS) {
+                if (texturesToLoad[texCount] == aiTextureType_DIFFUSE) {
+                    diffuseTexture = path + texturePath.C_Str();                    
+                    aiMaterial* material = scene->mMaterials[i];
+                    aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity);
+                }
+                if (texturesToLoad[texCount] == aiTextureType_OPACITY) {
+                    opacityTexture = path + texturePath.C_Str();
+                }
+            }
+        }        
+        
+       materialManager.Create(diffuseTexture, opacity, opacityTexture);        
     }
 
     // Now we can access the file's contents.

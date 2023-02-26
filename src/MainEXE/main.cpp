@@ -286,10 +286,14 @@ int main(int argc, char** argv)
 	GLuint meshShaderProgram = CreateShaderProgram(basePath + "res/shaders/mesh_vert.glsl", basePath + "res/shaders/mesh_frag.glsl");
 
 	/* Setup some basic OpenGL Params */
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
+	glDisable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	//glClearColor(0.0f, 0.1f, 0.5f, 1.0f);
 
 	bool running = true;
