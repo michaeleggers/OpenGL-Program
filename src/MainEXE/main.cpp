@@ -296,6 +296,17 @@ int main(int argc, char** argv)
 
 	//glClearColor(0.0f, 0.1f, 0.5f, 1.0f);
 
+	/* For now only one shader program active */
+	glUseProgram(meshShaderProgram);
+	/* Not sure if we need to have more VAOs later and bind different ones each frame */
+	glBindVertexArray(testMeshVAO);
+	/* Bind buffers _once_ and go */
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dataIndices);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, dataIndices);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, drawDataBuffer);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, materialBuffer);
+
 	bool running = true;
 	while (running) {
 
@@ -351,13 +362,6 @@ int main(int argc, char** argv)
 		//	0,
 		//	3);
 
-		glUseProgram(meshShaderProgram);
-		glBindVertexArray(testMeshVAO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dataIndices);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, dataIndices);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, drawDataBuffer);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, materialBuffer);
 
 		//glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
 		 
