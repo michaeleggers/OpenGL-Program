@@ -34,6 +34,6 @@ struct Model
 };
 
 
-Model ImportModel(MaterialManager& materialManager, const std::string& path);
+Model ImportModel(MaterialManager& materialManager, const std::string basePath, const std::string assetDir, const std::string& modelFile);
 
 #endif

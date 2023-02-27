@@ -10,12 +10,15 @@
 #include "me_model_import.h"
 #include "me_Material.h"
 
-Model ImportModel(MaterialManager& materialManager, const std::string& path)
+Model ImportModel(MaterialManager& materialManager, const std::string basePath, const std::string assetDir, const std::string& modelFile)
 {
     // Create an instance of the Importer class
     Assimp::Importer importer;
 
-    std::string gltfFile = path + "scene.gltf";
+    std::string relFilePath = assetDir + modelFile;
+    std::string absAssetDir = basePath + "res/models/" + assetDir; // TODO: lazy. What if double '//'? What if assetDir = knight without '/'
+    std::string gltfFile = absAssetDir + modelFile;
+    printf("AssImp: Loading model [ %s ]...\n", relFilePath.c_str());
     // And have it read the given file with some example postprocessing
     // Usually - if speed is not the most important aspect for you - you'll
     // probably to request more postprocessing than we do in this example.
@@ -38,6 +41,8 @@ Model ImportModel(MaterialManager& materialManager, const std::string& path)
         aiTextureType_DIFFUSE,
         aiTextureType_OPACITY
     };
+
+    printf("AssImp: Loading Materials [ %d found ]\n", scene->mNumMaterials);
     for (size_t i = 0; i < scene->mNumMaterials; i++) {
         
         std::string diffuseTexture{};
@@ -47,13 +52,14 @@ Model ImportModel(MaterialManager& materialManager, const std::string& path)
             aiString texturePath;
             aiReturn texFound = scene->mMaterials[i]->GetTexture(texturesToLoad[texCount], 0, &texturePath);
             if (texFound == aiReturn_SUCCESS) {
+                printf("AssImp: Texture found: %s\n", texturePath.C_Str());
                 if (texturesToLoad[texCount] == aiTextureType_DIFFUSE) {
-                    diffuseTexture = path + texturePath.C_Str();                    
+                    diffuseTexture = absAssetDir + texturePath.C_Str();
                     aiMaterial* material = scene->mMaterials[i];
                     aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity);
                 }
                 if (texturesToLoad[texCount] == aiTextureType_OPACITY) {
-                    opacityTexture = path + texturePath.C_Str();
+                    opacityTexture = absAssetDir + texturePath.C_Str();
                 }
             }
         }        
