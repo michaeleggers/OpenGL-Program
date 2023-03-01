@@ -173,7 +173,7 @@ int main(int argc, char** argv)
 	MaterialManager materialManager(basePath);
 
 	/* Load models */
-	Model spitfire = ImportModel(materialManager, basePath, "knight/", "knight.obj");	
+	Model spitfire = ImportModel(materialManager, basePath, "biplane/", "scene.gltf");	
 
 	Vertex cube_vertices[] = {
 		// front
