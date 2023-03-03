@@ -47,6 +47,8 @@ Model ImportModel(MaterialManager& materialManager, const std::string basePath, 
         
         std::string diffuseTexture{};
         float opacity = 1.0f;
+        float transparencyFactor = 1.0f;
+        float colorTransparent = 1.0f;
         std::string opacityTexture{};
         for (size_t texCount = 0; texCount < 2; texCount++) {
             aiString texturePath;
@@ -57,6 +59,9 @@ Model ImportModel(MaterialManager& materialManager, const std::string basePath, 
                     diffuseTexture = absAssetDir + texturePath.C_Str();
                     aiMaterial* material = scene->mMaterials[i];
                     aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity);
+                    aiGetMaterialFloat(material, AI_MATKEY_TRANSPARENCYFACTOR, &transparencyFactor);
+                    aiGetMaterialFloat(material, AI_MATKEY_COLOR_TRANSPARENT, &colorTransparent);
+                    
                 }
                 if (texturesToLoad[texCount] == aiTextureType_OPACITY) {
                     opacityTexture = absAssetDir + texturePath.C_Str();
@@ -72,6 +77,8 @@ Model ImportModel(MaterialManager& materialManager, const std::string basePath, 
     for (size_t meshIdx = 0; meshIdx < scene->mNumMeshes; meshIdx++) {
         aiMesh* aiMesh = scene->mMeshes[meshIdx];
         Mesh mesh{};
+        mesh.name = std::string(aiMesh->mName.C_Str());
+        printf("AssImp: Loading mesh: %s\n", mesh.name.c_str());
         mesh.vertices.resize(aiMesh->mNumVertices);
         mesh.materialID = aiMesh->mMaterialIndex; // TODO: Might differ from material mangers material ID!
         memset(mesh.vertices.data(), 0, mesh.vertices.size()*sizeof(Vertex));

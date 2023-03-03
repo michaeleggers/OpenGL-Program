@@ -173,7 +173,7 @@ int main(int argc, char** argv)
 	MaterialManager materialManager(basePath);
 
 	/* Load models */
-	Model spitfire = ImportModel(materialManager, basePath, "biplane/", "scene.gltf");	
+	Model spitfire = ImportModel(materialManager, basePath, "pretty_remastered/", "scene.gltf");	
 
 	Vertex cube_vertices[] = {
 		// front
@@ -286,8 +286,8 @@ int main(int argc, char** argv)
 	GLuint meshShaderProgram = CreateShaderProgram(basePath + "res/shaders/mesh_vert.glsl", basePath + "res/shaders/mesh_frag.glsl");
 
 	/* Setup some basic OpenGL Params */
-	//glEnable(GL_CULL_FACE);
-	glDisable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glCullFace(GL_BACK);
@@ -352,8 +352,8 @@ int main(int argc, char** argv)
 		glNamedBufferSubData(perFrameDataBuffer, 0, sizeof(PerFrameData), &perFrameData);
 
 		/* Render */
-		GLfloat color[] = { 0.2, 0.2, 0.2, 1.0 };
-		glClearColor(0.2, 0.2, 0.2, 1.0);
+		GLfloat color[] = { 0.2, 0.2, 0.2, 0.0 };
+		glClearColor(0.0, 0.2, 0.7, 0.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		//glClearBufferfv(GL_DEPTH, , color);
 		//glBindVertexArray(vao);
