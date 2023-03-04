@@ -5,6 +5,7 @@
 layout(std140, binding = 0) uniform PerFrameData {
     uniform mat4 view;
     uniform mat4 projection;
+    uniform vec3 viewPos;
 };
 
 struct Vertex {

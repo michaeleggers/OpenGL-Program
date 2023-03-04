@@ -59,8 +59,8 @@ Model ImportModel(MaterialManager& materialManager, const std::string basePath, 
                     diffuseTexture = absAssetDir + texturePath.C_Str();
                     aiMaterial* material = scene->mMaterials[i];
                     aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity);
-                    aiGetMaterialFloat(material, AI_MATKEY_TRANSPARENCYFACTOR, &transparencyFactor);
-                    aiGetMaterialFloat(material, AI_MATKEY_COLOR_TRANSPARENT, &colorTransparent);
+                    //aiGetMaterialFloat(material, AI_MATKEY_TRANSPARENCYFACTOR, &transparencyFactor);
+                    //aiGetMaterialFloat(material, AI_MATKEY_COLOR_TRANSPARENT, &colorTransparent);
                     
                 }
                 if (texturesToLoad[texCount] == aiTextureType_OPACITY) {

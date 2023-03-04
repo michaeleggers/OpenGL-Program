@@ -41,6 +41,7 @@ struct PerFrameData
 {
 	glm::mat4 view;
 	glm::mat4 projection;
+	glm::vec3 viewPos;
 };
 
 struct MouseInputState
@@ -173,7 +174,7 @@ int main(int argc, char** argv)
 	MaterialManager materialManager(basePath);
 
 	/* Load models */
-	Model spitfire = ImportModel(materialManager, basePath, "pretty_remastered/", "scene.gltf");	
+	Model spitfire = ImportModel(materialManager, basePath, "spitfire/", "scene.gltf");	
 
 	Vertex cube_vertices[] = {
 		// front
@@ -349,6 +350,7 @@ int main(int argc, char** argv)
 		/* Update per frame data */
 		perFrameData.view = glm::lookAt(camera.m_Pos, camera.m_Center, camera.m_Up);
 		perFrameData.projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 1000.0f);
+		perFrameData.viewPos = camera.m_Pos;
 		glNamedBufferSubData(perFrameDataBuffer, 0, sizeof(PerFrameData), &perFrameData);
 
 		/* Render */
