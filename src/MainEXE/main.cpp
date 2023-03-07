@@ -175,6 +175,8 @@ int main(int argc, char** argv)
 
 	/* Load models */
 	Model spitfire = ImportModel(materialManager, basePath, "spitfire/", "scene.gltf");	
+	glUnmapBuffer(GL_UNIFORM_BUFFER);
+
 
 	Vertex cube_vertices[] = {
 		// front
@@ -306,7 +308,7 @@ int main(int argc, char** argv)
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, dataIndices);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, drawDataBuffer);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, materialBuffer);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, materialBuffer);	
 
 	bool running = true;
 	while (running) {
@@ -349,7 +351,7 @@ int main(int argc, char** argv)
 
 		/* Update per frame data */
 		perFrameData.view = glm::lookAt(camera.m_Pos, camera.m_Center, camera.m_Up);
-		perFrameData.projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 1000.0f);
+		perFrameData.projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 10000.0f);
 		perFrameData.viewPos = camera.m_Pos;
 		glNamedBufferSubData(perFrameDataBuffer, 0, sizeof(PerFrameData), &perFrameData);
 

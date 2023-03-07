@@ -68,8 +68,8 @@ Model ImportModel(MaterialManager& materialManager, const std::string basePath, 
                 }
             }
         }        
+        materialManager.Create(diffuseTexture, opacity, opacityTexture);        
         
-       materialManager.Create(diffuseTexture, opacity, opacityTexture);        
     }
 
     // Now we can access the file's contents.

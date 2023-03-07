@@ -1,7 +1,6 @@
 #version 460 core
 
-#extension GL_ARB_bindless_texture: enable
-
+#extension GL_ARB_bindless_texture : require
 
 #define M_PI 3.1415926535897932384626433832795
 
@@ -12,8 +11,8 @@ layout(std140, binding = 0) uniform PerFrameData {
 };
 
 struct Material {
-    uvec2 diffuseTextureID;
-    uvec2 opacityTextureID;
+    uint  diffuseTextureID;
+    uint  opacityTextureID;
     uint  hasDiffuse;
     uint  hasOpacity;
     float opacity;
@@ -29,7 +28,17 @@ layout(std430, binding = 4) readonly buffer Materials {
     Material in_Materials[];
 };
 
-layout(binding = 5) uniform sampler2D textures[];
+layout(std430, binding = 5) readonly buffer Textures {
+    sampler2D in_Samplers[32];
+};
+
+// Texture block
+//layout (binding = 1, std140) uniform TEXTURE_BLOCK
+//{
+//    sampler2D      in_Samplers[32];
+//};
+
+//layout(binding = 5) uniform sampler2D textures[];
 
 out vec4 outColor;
 
@@ -80,21 +89,24 @@ void main()
 
     // Get the material info
     Material material = in_Materials[materialID];
+
+    // Standard values if no texture is set
     vec4 diffuseColor = vec4(1, 0, 0, 1);
     vec4 opacityMap   = vec4(1, 1, 1, 1);
+
+    // Sample values from textures if available
     if (material.hasDiffuse == 1) {
-        sampler2D diffuseSampler = sampler2D(material.diffuseTextureID);
-        diffuseColor = texture(diffuseSampler, uv);
+        //sampler2D diffuseSampler = sampler2D(nonuniformEXT(material.diffuseTextureID));
+        diffuseColor = texture(in_Samplers[material.diffuseTextureID], uv);
     }
     if (material.hasOpacity == 1) {
-        sampler2D opacitySampler = sampler2D(material.opacityTextureID);
-        opacityMap = texture(opacitySampler, uv);
+        //sampler2D opacitySampler = sampler2D(nonuniformEXT(material.opacityTextureID));
+        opacityMap = texture(in_Samplers[material.opacityTextureID], uv);
     }
 
     // Compute some values used later
     vec3 viewDir = normalize(viewPos - position); // vector from fragment to viewer
     
-
     // Compute Radiance to viewer
     // TODO: Get from material.
     float roughness = 0.01; 
@@ -120,6 +132,6 @@ void main()
     outColor = vec4(outgoingRadiance, diffuseColor.a);
     outColor = vec4(pow(outgoingRadiance, vec3(1.0/2.2)), diffuseColor.a);
 
-    // outColor = diffuseColor;
+    //outColor = diffuseColor;
 
 }

@@ -7,6 +7,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/SDL/include
 	${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/assimp/include
 	${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/
+	${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/glm
 )
 
 add_executable(MainEXE

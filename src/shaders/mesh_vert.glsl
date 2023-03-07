@@ -18,14 +18,6 @@ struct Index {
     uint idx;
 };
 
-struct Material {
-    uvec2 diffuseTextureID;
-    uvec2 opacityTextureID;
-    bool  hasDiffuse;
-    bool  hasOpacity;
-    float opacity;
-};
-
 struct DrawData {
     uint indexOffset;
     uint vertexOffset;
