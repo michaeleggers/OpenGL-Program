@@ -8,23 +8,29 @@
 
 #define MAX_TEXTURES 32
 
-//#pragma pack(push, 1)
+#pragma pack(push, 1)
 struct Material
 {
-	uint32_t diffuseTextureID;
+	uint32_t albedoTextureID;
 	uint32_t opacityTextureID;
-	uint32_t hasDiffuseTextureHandle;
-	uint32_t hasOpacityTextureHandle;
+	uint32_t metalnessTextureID;
+	uint32_t roughnessTextureID;
+	uint32_t normalTextureID;
+	uint32_t hasAlbedo;
+	uint32_t hasOpacity;
+	uint32_t hasMetalness;
+	uint32_t hasRoughness;
+	uint32_t hasNormal;
 	float    opacity;
 };
-//#pragma pack(pop)
+#pragma pack(pop)
 
 class MaterialManager
 {
 public:
 	MaterialManager(std::string basePath);
 
-	uint32_t Create(std::string diffuseTexturePath, float opacity, std::string opacityMapPath);
+	uint32_t Create(std::string diffuseTexturePath, float opacity, std::string opacityMapPath, std::string metalnessTexturePath, std::string roughnessTexturePath, std::string normalTexturePath);
 	Material GetByID(uint32_t id);
 	uint32_t UploadTexture(std::string texturePath);
 	

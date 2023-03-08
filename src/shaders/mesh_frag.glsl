@@ -11,10 +11,16 @@ layout(std140, binding = 0) uniform PerFrameData {
 };
 
 struct Material {
-    uint  diffuseTextureID;
+    uint  albedoTextureID;
     uint  opacityTextureID;
-    uint  hasDiffuse;
+    uint  metalnessTextureID;
+    uint  roughnessTextureID;
+    uint  normalTextureID;
+    uint  hasAlbedo;
     uint  hasOpacity;
+    uint  hasMetalness;
+    uint  hasRoughness;
+    uint  hasNormal;
     float opacity;
 };
 
@@ -42,7 +48,7 @@ layout(std430, binding = 5) readonly buffer Textures {
 
 out vec4 outColor;
 
-vec3 lights[15] = vec3[15](
+vec3 lights[19] = vec3[19](
     vec3(100, 10, 20),
     vec3(-100, 10, 10),
     vec3(0, 400, -100),
@@ -57,7 +63,11 @@ vec3 lights[15] = vec3[15](
     vec3(100, 400, -100),
     vec3(100, -400, 200),
     vec3(100, -400, 200),
-    vec3(100, -400, 200)
+    vec3(100, -400, 200),
+    vec3(0, -400, 0),
+    vec3(0, 0, 400),
+    vec3(0, 0, 400),
+    vec3(0, 0, 400)
 );
 
 float distributionGGX(vec3 N, vec3 H, float a) {
@@ -91,47 +101,55 @@ void main()
     Material material = in_Materials[materialID];
 
     // Standard values if no texture is set
-    vec4 diffuseColor = vec4(1, 0, 0, 1);
+    vec4 albedoColor = vec4(1, 0, 0, 1);
     vec4 opacityMap   = vec4(1, 1, 1, 1);
-
+    vec3  metalness = vec3(1.0);
+    float roughness = 0.01; 
+    vec3 perFragmentNormal = normal;
     // Sample values from textures if available
-    if (material.hasDiffuse == 1) {
-        //sampler2D diffuseSampler = sampler2D(nonuniformEXT(material.diffuseTextureID));
-        diffuseColor = texture(in_Samplers[material.diffuseTextureID], uv);
+    if (material.hasAlbedo == 1) {
+        //sampler2D albedoSampler = sampler2D(material.albedoTextureID);
+        albedoColor = texture(in_Samplers[material.albedoTextureID], uv);
     }
     if (material.hasOpacity == 1) {
-        //sampler2D opacitySampler = sampler2D(nonuniformEXT(material.opacityTextureID));
+        //sampler2D opacitySampler = sampler2D(material.opacityTextureID);
         opacityMap = texture(in_Samplers[material.opacityTextureID], uv);
+    }
+    if (material.hasMetalness == 1) {
+        metalness = texture(in_Samplers[material.metalnessTextureID], uv).bbb;
+    }
+    if (material.hasRoughness == 1) {
+        roughness = texture(in_Samplers[material.roughnessTextureID], uv).g;
+    }
+    if (material.hasNormal == 1) {
+        //perFragmentNormal = texture(in_Samplers[material.normalTextureID], uv).xyz;
     }
 
     // Compute some values used later
     vec3 viewDir = normalize(viewPos - position); // vector from fragment to viewer
     
     // Compute Radiance to viewer
-    // TODO: Get from material.
-    float roughness = 0.01; 
-    vec3  metalness = vec3(1.0);
     float k = (roughness + 1) * (roughness + 1) / 8;
     vec3 F0 = vec3(0.04);
-    F0 = mix(F0, diffuseColor.rgb, metalness);
+    F0 = mix(F0, albedoColor.rgb, metalness);
     vec3 outgoingRadiance = vec3(0);
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < 19; i++) {
         vec3 currentLightPos = lights[i];
         vec3 lightDir = normalize(currentLightPos - position);
         vec3 halfwayVec = (viewDir + lightDir) / (length(viewDir + lightDir));
-        float D = distributionGGX(normal, halfwayVec, roughness);
-        float G = schlickGGX(normal, viewDir, k) * schlickGGX(normal, lightDir, k);
+        float D = distributionGGX(perFragmentNormal, halfwayVec, roughness);
+        float G = schlickGGX(perFragmentNormal, viewDir, k) * schlickGGX(normal, lightDir, k);
         vec3  F = fresenelSchlick(halfwayVec, viewDir, F0);
-        vec3  cookTorrace = D*G*F / 4*( max(dot(viewDir, normal), 0.0) * max(dot(lightDir, normal), 0) );
-        float cosTheta = max(0.0, dot(lightDir, normal));
-        outgoingRadiance +=  ((diffuseColor.rgb/M_PI) + cookTorrace) * lightColor * cosTheta;
+        vec3  cookTorrace = D*G*F / 4*( max(dot(viewDir, perFragmentNormal), 0.0) * max(dot(lightDir, perFragmentNormal), 0) );
+        float cosTheta = max(0.0, dot(lightDir, perFragmentNormal));
+        outgoingRadiance +=  ((albedoColor.rgb/M_PI) + cookTorrace) * lightColor * cosTheta;
     }
 
     outColor = vec4(color, 1.0);
-    // diffuseColor.a = material.opacity * diffuseColor.a;
-    outColor = vec4(outgoingRadiance, diffuseColor.a);
-    outColor = vec4(pow(outgoingRadiance, vec3(1.0/2.2)), diffuseColor.a);
+    // albedoColor.a = material.opacity * albedoColor.a;
+    outColor = vec4(outgoingRadiance, albedoColor.a);
+    outColor = vec4(pow(outgoingRadiance, vec3(1.0/2.2)), albedoColor.a);
 
-    //outColor = diffuseColor;
+    //outColor = albedoColor;
 
 }

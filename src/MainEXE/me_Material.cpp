@@ -10,6 +10,9 @@
 #include <stb/stb_image.h>
 
 uint32_t MaterialManager::UploadTexture(std::string texturePath) {
+
+	// TODO: Check if texture already present
+
 	int x, y, n;
 	unsigned char* data = stbi_load(texturePath.c_str(), &x, &y, &n, 4);
 	GLuint texture;
@@ -59,16 +62,28 @@ MaterialManager::MaterialManager(std::string basePath) {
 
 // TODO: If same diffuseTexturePath is passed more than once, we do NOT
 //       want to load it again (and not create a new resource on GPU!!!)
-uint32_t MaterialManager::Create(std::string diffuseTexturePath, float opacity, std::string opacityMapPath) {	
+uint32_t MaterialManager::Create(std::string diffuseTexturePath, float opacity, std::string opacityMapPath, std::string metalnessTexturePath, std::string roughnessTexturePath, std::string normalTexturePath) {	
 	Material material{};
 	if (!diffuseTexturePath.empty()) {
-		material.hasDiffuseTextureHandle = 1;
-		material.diffuseTextureID = UploadTexture(diffuseTexturePath);
+		material.hasAlbedo = 1;
+		material.albedoTextureID  = UploadTexture(diffuseTexturePath);
 	}
 	if (!opacityMapPath.empty()) {
-		material.hasOpacityTextureHandle = 1;
-		material.opacityTextureID = UploadTexture(opacityMapPath);		
+		material.hasOpacity = 1;
+		material.opacityTextureID  = UploadTexture(opacityMapPath);		
 	} 
+	if (!metalnessTexturePath.empty()) {
+		material.hasMetalness = 1;
+		material.metalnessTextureID = UploadTexture(metalnessTexturePath);
+	}
+	if (!roughnessTexturePath.empty()) {
+		material.hasRoughness = 1;
+		material.roughnessTextureID = UploadTexture(roughnessTexturePath);
+	}
+	if (!normalTexturePath.empty()) {
+		material.hasNormal = 1;
+		material.normalTextureID = UploadTexture(normalTexturePath);
+	}
 	material.opacity = opacity;
 	m_Materials.push_back(material);
 

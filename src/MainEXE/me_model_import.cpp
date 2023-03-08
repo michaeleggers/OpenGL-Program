@@ -39,36 +39,49 @@ Model ImportModel(MaterialManager& materialManager, const std::string basePath, 
     // Get texture names
     aiTextureType texturesToLoad[] = {
         aiTextureType_DIFFUSE,
-        aiTextureType_OPACITY
+        aiTextureType_OPACITY,
+        aiTextureType_METALNESS,
+        aiTextureType_DIFFUSE_ROUGHNESS,
+        aiTextureType_NORMALS
     };
+    size_t textureCount = sizeof(texturesToLoad) / sizeof(aiTextureType);
 
     printf("AssImp: Loading Materials [ %d found ]\n", scene->mNumMaterials);
     for (size_t i = 0; i < scene->mNumMaterials; i++) {
         
         std::string diffuseTexture{};
+        std::string opacityTexture{};
+        std::string metalnessTexture{};
+        std::string roughnessTexture{};
+        std::string normalTexture{};
         float opacity = 1.0f;
         float transparencyFactor = 1.0f;
         float colorTransparent = 1.0f;
-        std::string opacityTexture{};
-        for (size_t texCount = 0; texCount < 2; texCount++) {
+        for (size_t texIdx = 0; texIdx < textureCount; texIdx++) {
             aiString texturePath;
-            aiReturn texFound = scene->mMaterials[i]->GetTexture(texturesToLoad[texCount], 0, &texturePath);
+            aiReturn texFound = scene->mMaterials[i]->GetTexture(texturesToLoad[texIdx], 0, &texturePath);
             if (texFound == aiReturn_SUCCESS) {
                 printf("AssImp: Texture found: %s\n", texturePath.C_Str());
-                if (texturesToLoad[texCount] == aiTextureType_DIFFUSE) {
+                if (texturesToLoad[texIdx] == aiTextureType_DIFFUSE) {
                     diffuseTexture = absAssetDir + texturePath.C_Str();
                     aiMaterial* material = scene->mMaterials[i];
                     aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity);
-                    //aiGetMaterialFloat(material, AI_MATKEY_TRANSPARENCYFACTOR, &transparencyFactor);
-                    //aiGetMaterialFloat(material, AI_MATKEY_COLOR_TRANSPARENT, &colorTransparent);
-                    
                 }
-                if (texturesToLoad[texCount] == aiTextureType_OPACITY) {
+                else if (texturesToLoad[texIdx] == aiTextureType_OPACITY) {
                     opacityTexture = absAssetDir + texturePath.C_Str();
+                }
+                else if (texturesToLoad[texIdx] == aiTextureType_METALNESS) {
+                    metalnessTexture = absAssetDir + texturePath.C_Str();
+                }
+                else if (texturesToLoad[texIdx] == aiTextureType_DIFFUSE_ROUGHNESS) {
+                    roughnessTexture = absAssetDir + texturePath.C_Str();
+                }
+                else if (texturesToLoad[texIdx] == aiTextureType_NORMALS) {
+                    normalTexture = absAssetDir + texturePath.C_Str();
                 }
             }
         }        
-        materialManager.Create(diffuseTexture, opacity, opacityTexture);        
+        materialManager.Create(diffuseTexture, opacity, opacityTexture, metalnessTexture, roughnessTexture, normalTexture);        
         
     }
 

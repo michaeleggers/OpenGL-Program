@@ -167,6 +167,11 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	/* Vsync */
+	if (SDL_GL_SetSwapInterval(1) == -1) { // 0 = no vsync, 1 = vysnc on, -1 = adaptive vsync
+		printf("Swap Interval not supported!\nSDL ERROR: %s\n", SDL_GetError());
+	}
+
 	/* Init path for loading resources */
 	basePath = SDL_GetBasePath();
 	
@@ -174,9 +179,7 @@ int main(int argc, char** argv)
 	MaterialManager materialManager(basePath);
 
 	/* Load models */
-	Model spitfire = ImportModel(materialManager, basePath, "spitfire/", "scene.gltf");	
-	glUnmapBuffer(GL_UNIFORM_BUFFER);
-
+	Model spitfire = ImportModel(materialManager, basePath, "gun/gltf/", "gun.gltf");	
 
 	Vertex cube_vertices[] = {
 		// front
@@ -289,8 +292,8 @@ int main(int argc, char** argv)
 	GLuint meshShaderProgram = CreateShaderProgram(basePath + "res/shaders/mesh_vert.glsl", basePath + "res/shaders/mesh_frag.glsl");
 
 	/* Setup some basic OpenGL Params */
-	glEnable(GL_CULL_FACE);
-	//glDisable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
+	glDisable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glCullFace(GL_BACK);
@@ -351,7 +354,7 @@ int main(int argc, char** argv)
 
 		/* Update per frame data */
 		perFrameData.view = glm::lookAt(camera.m_Pos, camera.m_Center, camera.m_Up);
-		perFrameData.projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 10000.0f);
+		perFrameData.projection = glm::perspective(glm::radians(60.0f), (float)windowWidth / (float)windowHeight, 1.0f, 10000.0f);
 		perFrameData.viewPos = camera.m_Pos;
 		glNamedBufferSubData(perFrameDataBuffer, 0, sizeof(PerFrameData), &perFrameData);
 
