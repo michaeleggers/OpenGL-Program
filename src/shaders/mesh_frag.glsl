@@ -29,6 +29,8 @@ layout (location = 1) in flat uint          materialID;
 layout (location = 2) in vec2               uv;
 layout (location = 3) in vec3               normal;
 layout (location = 4) in vec3               position;
+layout (location = 5) in vec3               position1;
+layout (location = 6) in vec3               position2;
 
 layout(std430, binding = 4) readonly buffer Materials {
     Material in_Materials[];
@@ -49,18 +51,18 @@ layout(std430, binding = 5) readonly buffer Textures {
 out vec4 outColor;
 
 vec3 lights[19] = vec3[19](
-    vec3(100, 10, 20),
-    vec3(-100, 10, 10),
-    vec3(0, 400, -100),
-    vec3(0, 400, -100),
-    vec3(0, 400, -100),
-    vec3(0, 400, 100),
-    vec3(0, 400, 100),
-    vec3(0, 400, -100),
+    vec3(1000, 0, 2000),
+    vec3(-1000, 0, 1000),
+    vec3(1000, 0, -1000),
+    vec3(1000, 0, -1000),
+    vec3(1000, 0, -1000),
+    vec3(-1000, 0, 1000),
+    vec3(-1000, 0, 1000),
+    vec3(0, 4000, -100),
     vec3(0, 400, -100),
     vec3(100, 400, -100),
-    vec3(100, 400, -100),
-    vec3(100, 400, -100),
+    vec3(100, 0, -100),
+    vec3(100, 0, -100),
     vec3(100, -400, 200),
     vec3(100, -400, 200),
     vec3(100, -400, 200),
@@ -123,6 +125,11 @@ void main()
     }
     if (material.hasNormal == 1) {
         //perFragmentNormal = texture(in_Samplers[material.normalTextureID], uv).xyz;
+        //perFragmentNormal = normalize((2.0*perFragmentNormal - 1.0));
+        // calculate normal from tangent/bitangent
+        //vec3 tangent = normalize(position1 - position);
+        //vec3 bitangent = normalize(cross(normal, tangent));
+        //perFragmentNormal = normalize(cross(tangent, bitangent));
     }
 
     // Compute some values used later
@@ -147,9 +154,12 @@ void main()
 
     outColor = vec4(color, 1.0);
     // albedoColor.a = material.opacity * albedoColor.a;
-    outColor = vec4(outgoingRadiance, albedoColor.a);
-    outColor = vec4(pow(outgoingRadiance, vec3(1.0/2.2)), albedoColor.a);
+    //outColor = vec4(outgoingRadiance, 1.0);
+    outColor = vec4(pow(outgoingRadiance, vec3(1.0/1.8)), 1.0);
 
     //outColor = albedoColor;
+    //outColor = vec4(perFragmentNormal*0.5 + 0.5, 1.0);
+    //outColor = vec4(vec3(roughness), 1.0);
+    //outColor = vec4(metalness, 1.0);
 
 }

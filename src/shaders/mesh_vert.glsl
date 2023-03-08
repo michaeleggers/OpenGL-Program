@@ -43,6 +43,9 @@ layout(location = 1) out flat uint          out_materialID;
 layout(location = 2) out vec2               out_uv;
 layout(location = 3) out vec3               out_normal;
 layout(location = 4) out vec3               out_position;
+layout(location = 5) out vec3               out_position1;
+layout(location = 6) out vec3               out_position2;
+
 
 vec3 getPosition(uint i) {
     return vec3(in_Vertices[i].pos[0], in_Vertices[i].pos[1], in_Vertices[i].pos[2]);
@@ -61,12 +64,15 @@ void main()
     DrawData dd = in_DrawData[gl_BaseInstance];
     
     uint vertexIndex = in_Indices[dd.indexOffset + gl_VertexID].idx;
-    
+
     // uint vertexIndex = in_Indices[gl_VertexID].idx;
     // uint vertexIndex = gl_InstanceID + gl_VertexID;
 
     // uint vertexIndex = gl_VertexID;
     vec3 worldPos = getPosition(vertexIndex);
+    vec3 worldPos1 = getPosition(vertexIndex + 1);
+    vec3 worldPos2 = getPosition(vertexIndex + 2);
+
     vec4 pos = projection * view * vec4(worldPos, 1.0);
     vec2 uv = getUV(vertexIndex);
     vec4 normal = vec4(getNormal(vertexIndex), 0.0);
@@ -74,7 +80,9 @@ void main()
     out_color = vec3(uv, 0.2);
     out_color = 0.5*normal.xyz + 0.5;
     out_materialID = dd.materialID;
-    out_uv = uv;
-    out_normal = normal.xyz;
-    out_position = worldPos;
+    out_uv         = uv;
+    out_normal     = normal.xyz;
+    out_position   = worldPos;
+    out_position1  = worldPos1;
+    out_position2  = worldPos2;
 }
