@@ -29,8 +29,7 @@ layout (location = 1) in flat uint          materialID;
 layout (location = 2) in vec2               uv;
 layout (location = 3) in vec3               normal;
 layout (location = 4) in vec3               position;
-layout (location = 5) in vec3               position1;
-layout (location = 6) in vec3               position2;
+layout (location = 5) in mat3               TBNmat;
 
 layout(std430, binding = 4) readonly buffer Materials {
     Material in_Materials[];
@@ -97,7 +96,7 @@ vec3 fresenelSchlick(vec3 H, vec3 V, vec3 F0) {
 void main()
 {
     vec3 pointLightPos = vec3(10, 10, 10);
-    vec3 lightColor = vec3(.4, .4, .4);
+    vec3 lightColor = vec3(1.0, 1.0, 1.0);
 
     // Get the material info
     Material material = in_Materials[materialID];
@@ -124,12 +123,11 @@ void main()
         roughness = texture(in_Samplers[material.roughnessTextureID], uv).g;
     }
     if (material.hasNormal == 1) {
-        //perFragmentNormal = texture(in_Samplers[material.normalTextureID], uv).xyz;
-        //perFragmentNormal = normalize((2.0*perFragmentNormal - 1.0));
-        // calculate normal from tangent/bitangent
-        //vec3 tangent = normalize(position1 - position);
-        //vec3 bitangent = normalize(cross(normal, tangent));
-        //perFragmentNormal = normalize(cross(tangent, bitangent));
+        perFragmentNormal = texture(in_Samplers[material.normalTextureID], uv).xyz;
+        perFragmentNormal = normalize((2.0*perFragmentNormal - 1.0)); // map from [0.0, 1.0] -> [-1.0, 1.0]
+
+        // convert normal from tangent-space to worldspace
+        perFragmentNormal = TBNmat * perFragmentNormal;
     }
 
     // Compute some values used later
@@ -140,7 +138,7 @@ void main()
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, albedoColor.rgb, metalness);
     vec3 outgoingRadiance = vec3(0);
-    for (int i = 0; i < 19; i++) {
+    for (int i = 0; i < 3; i++) {
         vec3 currentLightPos = lights[i];
         vec3 lightDir = normalize(currentLightPos - position);
         vec3 halfwayVec = (viewDir + lightDir) / (length(viewDir + lightDir));
@@ -155,7 +153,7 @@ void main()
     outColor = vec4(color, 1.0);
     // albedoColor.a = material.opacity * albedoColor.a;
     //outColor = vec4(outgoingRadiance, 1.0);
-    outColor = vec4(pow(outgoingRadiance, vec3(1.0/1.8)), 1.0);
+    outColor = vec4(pow(outgoingRadiance, vec3(1.0/1.6)), 1.0);
 
     //outColor = albedoColor;
     //outColor = vec4(perFragmentNormal*0.5 + 0.5, 1.0);

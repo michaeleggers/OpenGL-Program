@@ -119,6 +119,12 @@ Model ImportModel(MaterialManager& materialManager, const std::string basePath, 
             v0.uv = glm::vec2(aiuv0.x, aiuv0.y);
             v1.uv = glm::vec2(aiuv1.x, aiuv1.y);
             v2.uv = glm::vec2(aiuv2.x, aiuv2.y);
+            aiVector3D ait0 = aiMesh->mTangents[idx0];
+            aiVector3D ait1 = aiMesh->mTangents[idx1];
+            aiVector3D ait2 = aiMesh->mTangents[idx2];
+            v0.tangent = glm::vec3(ait0.x, ait0.y, ait0.z);
+            v1.tangent = glm::vec3(ait1.x, ait1.y, ait1.z);
+            v2.tangent = glm::vec3(ait2.x, ait2.y, ait2.z);
             mesh.indices.push_back(idx0 + model.vertexCount);
             mesh.indices.push_back(idx1 + model.vertexCount);
             mesh.indices.push_back(idx2 + model.vertexCount);
