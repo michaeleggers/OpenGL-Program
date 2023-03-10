@@ -110,7 +110,7 @@ GLuint CreateShaderProgram(std::string const vertShaderFile, std::string const f
 	return shaderProgram;
 }
 
-#define DOLLY_SPEED			1.0
+#define DOLLY_SPEED			.5
 #define SLOWDOLLYSPEED		(DOLLY_SPEED * 0.1)
 void UpdateCamera(Camera& camera)
 {
@@ -354,7 +354,7 @@ int main(int argc, char** argv)
 
 		/* Update per frame data */
 		perFrameData.view = glm::lookAt(camera.m_Pos, camera.m_Center, camera.m_Up);
-		perFrameData.projection = glm::perspective(glm::radians(60.0f), (float)windowWidth / (float)windowHeight, 1.0f, 10000.0f);
+		perFrameData.projection = glm::perspective(glm::radians(60.0f), (float)windowWidth / (float)windowHeight, 0.1f, 10000.0f);
 		perFrameData.viewPos = camera.m_Pos;
 		glNamedBufferSubData(perFrameDataBuffer, 0, sizeof(PerFrameData), &perFrameData);
 

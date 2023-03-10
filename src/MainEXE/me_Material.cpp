@@ -9,6 +9,12 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
+void checkGlError() {
+	if (glGetError() != GL_NO_ERROR) {
+		printf("GL Error at %s: %d\n", __FILE__, __LINE__);
+	}
+}
+
 uint32_t MaterialManager::UploadTexture(std::string texturePath) {
 
 	// TODO: Check if texture already present
@@ -17,9 +23,11 @@ uint32_t MaterialManager::UploadTexture(std::string texturePath) {
 	unsigned char* data = stbi_load(texturePath.c_str(), &x, &y, &n, 4);
 	GLuint texture;
 	glCreateTextures(GL_TEXTURE_2D, 1, &texture);
+	checkGlError();
 	glTextureStorage2D(texture, 1, GL_RGBA8, x, y);
+	checkGlError();
 	glTextureSubImage2D(texture, 0, 0, 0, x, y, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	
+	checkGlError();
 	//glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	//glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -28,9 +36,14 @@ uint32_t MaterialManager::UploadTexture(std::string texturePath) {
 	//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	
 	GLuint64 GL_TextureHandle = glGetTextureHandleARB(texture);
+	checkGlError();
+
 	glMakeTextureHandleResidentARB(GL_TextureHandle);
+	checkGlError();
+
 	//m_GL_pHandles[m_TextureCount] = GL_TextureHandle;
 	glNamedBufferSubData(m_GL_TextureHandleBuffer, m_TextureCount * sizeof(GLuint64), sizeof(GLuint64), &GL_TextureHandle);
+	checkGlError();
 
 	stbi_image_free(data);
 
@@ -42,7 +55,11 @@ MaterialManager::MaterialManager(std::string basePath) {
 	m_TextureCount = 0;
 	
 	glCreateBuffers(1, &m_GL_TextureHandleBuffer);
+	checkGlError();
+
 	glNamedBufferStorage(m_GL_TextureHandleBuffer, sizeof(GLuint64) * MAX_TEXTURES, nullptr, GL_DYNAMIC_STORAGE_BIT);
+	checkGlError();
+
 	//glGenBuffers(1, &m_GL_TextureHandleBuffer);
 	//glBindBuffer(GL_UNIFORM_BUFFER, m_GL_TextureHandleBuffer);
 	//glBufferStorage(GL_UNIFORM_BUFFER,
@@ -53,6 +70,7 @@ MaterialManager::MaterialManager(std::string basePath) {
 	//glBindBuffer(GL_UNIFORM_BUFFER, m_GL_TextureHandleBuffer);
 	//glBindBufferRange(GL_UNIFORM_BUFFER, 1, m_GL_TextureHandleBuffer , 0, sizeof(GLuint64) * MAX_TEXTURES);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, m_GL_TextureHandleBuffer);
+	checkGlError();
 
 	//glNamedBufferStorage(m_GL_TextureHandleBuffer,
 	//	MAX_TEXTURES * sizeof(GLuint64), nullptr, GL_DYNAMIC_STORAGE_BIT);

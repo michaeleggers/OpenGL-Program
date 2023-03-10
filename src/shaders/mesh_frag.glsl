@@ -36,7 +36,7 @@ layout(std430, binding = 4) readonly buffer Materials {
 };
 
 layout(std430, binding = 5) readonly buffer Textures {
-    sampler2D in_Samplers[32];
+    uvec2 in_Samplers[32];
 };
 
 // Texture block
@@ -89,14 +89,15 @@ float schlickGGX(vec3 N, vec3 V, float k) {
     return NdotV / (NdotV*oneMinK + k);
 }
 
+// F0: surface reflection at zero incidence (=> how much does the surface
+//     reflects when looking directly at it.)
 vec3 fresenelSchlick(vec3 H, vec3 V, vec3 F0) {
-    return F0 + (vec3(1.0)-F0)* pow( 1.0-max(dot(H, V), 0.0), 5 );
+    return F0 + (vec3(1.0)-F0)* pow( 1.0-max(dot(H, V), 0.0), 5.0 );
 }
 
 void main()
 {
-    vec3 pointLightPos = vec3(10, 10, 10);
-    vec3 lightColor = vec3(1.0, 1.0, 1.0);
+    vec3 lightColor = vec3(300000.0, 300000.0, 300000.0);
 
     // Get the material info
     Material material = in_Materials[materialID];
@@ -110,20 +111,20 @@ void main()
     // Sample values from textures if available
     if (material.hasAlbedo == 1) {
         //sampler2D albedoSampler = sampler2D(material.albedoTextureID);
-        albedoColor = texture(in_Samplers[material.albedoTextureID], uv);
+        albedoColor = texture(sampler2D(in_Samplers[material.albedoTextureID]), uv);
     }
     if (material.hasOpacity == 1) {
         //sampler2D opacitySampler = sampler2D(material.opacityTextureID);
-        opacityMap = texture(in_Samplers[material.opacityTextureID], uv);
+        opacityMap = texture(sampler2D(in_Samplers[material.opacityTextureID]), uv);
     }
     if (material.hasMetalness == 1) {
-        metalness = texture(in_Samplers[material.metalnessTextureID], uv).bbb;
+        metalness = texture(sampler2D(in_Samplers[material.metalnessTextureID]), uv).bbb;
     }
     if (material.hasRoughness == 1) {
-        roughness = texture(in_Samplers[material.roughnessTextureID], uv).g;
+        roughness = texture(sampler2D(in_Samplers[material.roughnessTextureID]), uv).g;
     }
     if (material.hasNormal == 1) {
-        perFragmentNormal = texture(in_Samplers[material.normalTextureID], uv).xyz;
+        perFragmentNormal = texture(sampler2D(in_Samplers[material.normalTextureID]), uv).xyz;
         perFragmentNormal = normalize((2.0*perFragmentNormal - 1.0)); // map from [0.0, 1.0] -> [-1.0, 1.0]
 
         // convert normal from tangent-space to worldspace
@@ -134,30 +135,42 @@ void main()
     vec3 viewDir = normalize(viewPos - position); // vector from fragment to viewer
     
     // Compute Radiance to viewer
-    float k = (roughness + 1) * (roughness + 1) / 8;
+    float k = (roughness + 1.0) * (roughness + 1.0) / 8.0;
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, albedoColor.rgb, metalness);
-    vec3 outgoingRadiance = vec3(0);
-    for (int i = 0; i < 3; i++) {
-        vec3 currentLightPos = lights[i];
-        vec3 lightDir = normalize(currentLightPos - position);
-        vec3 halfwayVec = (viewDir + lightDir) / (length(viewDir + lightDir));
+    vec3 outgoingRadiance = vec3(0.0);
+    for (int i = 0; i < 19; i++) {
+        vec3  lightPos      = lights[i];
+        vec3  lightDir      = normalize(lightPos - position);
+        float lightDistance = length(lightPos - position);
+        vec3  halfwayVec    = (viewDir + lightDir) / (length(viewDir + lightDir));
+        float attenuation   = 1.0 / (lightDistance*lightDistance);
+        vec3  radiance      = lightColor * attenuation;
         float D = distributionGGX(perFragmentNormal, halfwayVec, roughness);
         float G = schlickGGX(perFragmentNormal, viewDir, k) * schlickGGX(normal, lightDir, k);
         vec3  F = fresenelSchlick(halfwayVec, viewDir, F0);
-        vec3  cookTorrace = D*G*F / 4*( max(dot(viewDir, perFragmentNormal), 0.0) * max(dot(lightDir, perFragmentNormal), 0) );
+        vec3  cookTorrace = D*G*F / 4*( max(dot(viewDir, perFragmentNormal), 0.0) * max(dot(lightDir, perFragmentNormal), 0.0) + 0.0001 );
         float cosTheta = max(0.0, dot(lightDir, perFragmentNormal));
-        outgoingRadiance +=  ((albedoColor.rgb/M_PI) + cookTorrace) * lightColor * cosTheta;
+        vec3 kS = F0;
+        vec3 kD = vec3(1.0) - kS;
+        kD *= 1.0 - metalness.b;
+        outgoingRadiance +=  ((kD*albedoColor.rgb/M_PI) + cookTorrace) * radiance * cosTheta;
     }
 
-    outColor = vec4(color, 1.0);
+    // Imporvised ambient term
+    vec3 ambient = vec3(0.03) * albedoColor.rgb; // * ambientOcclusion
+    outgoingRadiance += ambient;
+
     // albedoColor.a = material.opacity * albedoColor.a;
     //outColor = vec4(outgoingRadiance, 1.0);
-    outColor = vec4(pow(outgoingRadiance, vec3(1.0/1.6)), 1.0);
+    outgoingRadiance = outgoingRadiance / (outgoingRadiance + vec3(1.0));
+    outColor = vec4(pow(outgoingRadiance, vec3(1.0/2.2)), 1.0);
+    //outColor = vec4(color, 1.0);
 
     //outColor = albedoColor;
     //outColor = vec4(perFragmentNormal*0.5 + 0.5, 1.0);
     //outColor = vec4(vec3(roughness), 1.0);
     //outColor = vec4(metalness, 1.0);
+    
 
 }

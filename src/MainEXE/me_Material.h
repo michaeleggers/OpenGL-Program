@@ -25,6 +25,8 @@ struct Material
 };
 #pragma pack(pop)
 
+void checkGlError();
+
 class MaterialManager
 {
 public:

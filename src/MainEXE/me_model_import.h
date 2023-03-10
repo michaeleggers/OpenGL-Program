@@ -10,6 +10,7 @@
 
 #include "me_Material.h"
 
+#pragma pack(push, 1)
 struct Vertex
 {
     glm::vec3 pos;
@@ -17,6 +18,7 @@ struct Vertex
     glm::vec3 normal;
     glm::vec3 tangent;
 };
+#pragma pack(pop)
 
 struct Mesh
 {
