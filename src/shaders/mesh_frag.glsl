@@ -97,7 +97,7 @@ vec3 fresenelSchlick(vec3 H, vec3 V, vec3 F0) {
 
 void main()
 {
-    vec3 lightColor = vec3(300000.0, 300000.0, 300000.0);
+    vec3 lightColor = vec3(150000.0, 150000.0, 150000.0);
 
     // Get the material info
     Material material = in_Materials[materialID];
@@ -106,7 +106,7 @@ void main()
     vec4 albedoColor = vec4(1, 0, 0, 1);
     vec4 opacityMap   = vec4(1, 1, 1, 1);
     vec3  metalness = vec3(1.0);
-    float roughness = 0.01; 
+    float roughness = 1.0; 
     vec3 perFragmentNormal = normal;
     // Sample values from textures if available
     if (material.hasAlbedo == 1) {
@@ -130,6 +130,9 @@ void main()
         // convert normal from tangent-space to worldspace
         perFragmentNormal = TBNmat * perFragmentNormal;
     }
+
+    // Convert albedo from sRGB to linear space
+    albedoColor.rgb = pow(albedoColor.rgb, vec3(2.2));
 
     // Compute some values used later
     vec3 viewDir = normalize(viewPos - position); // vector from fragment to viewer
@@ -157,14 +160,23 @@ void main()
         outgoingRadiance +=  ((kD*albedoColor.rgb/M_PI) + cookTorrace) * radiance * cosTheta;
     }
 
+
+    //outColor = vec4(pow(outgoingRadiance, vec3(1.0/2.2)), 1.0);
+
+    // exposure tone mapping
+    float exposure = 1.0;
+    outgoingRadiance = vec3(1.0) - exp(-outgoingRadiance * exposure);
+    outgoingRadiance = outgoingRadiance / (outgoingRadiance + vec3(1.0));
+    
     // Imporvised ambient term
-    vec3 ambient = vec3(0.03) * albedoColor.rgb; // * ambientOcclusion
+    vec3 ambient = vec3(0.4) * albedoColor.rgb; // * ambientOcclusion
     outgoingRadiance += ambient;
+    
+    // gamma correction
+    outColor = vec4(pow(outgoingRadiance, vec3(1.0/2.2)), 1.0); 
 
     // albedoColor.a = material.opacity * albedoColor.a;
     //outColor = vec4(outgoingRadiance, 1.0);
-    outgoingRadiance = outgoingRadiance / (outgoingRadiance + vec3(1.0));
-    outColor = vec4(pow(outgoingRadiance, vec3(1.0/2.2)), 1.0);
     //outColor = vec4(color, 1.0);
 
     //outColor = albedoColor;
