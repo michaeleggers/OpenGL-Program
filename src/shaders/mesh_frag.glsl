@@ -169,7 +169,7 @@ void main()
     outgoingRadiance = outgoingRadiance / (outgoingRadiance + vec3(1.0));
     
     // Imporvised ambient term
-    vec3 ambient = vec3(0.4) * albedoColor.rgb; // * ambientOcclusion
+    vec3 ambient = vec3(0.07) * albedoColor.rgb; // * ambientOcclusion
     outgoingRadiance += ambient;
     
     // gamma correction

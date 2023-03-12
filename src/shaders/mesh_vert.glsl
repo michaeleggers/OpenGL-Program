@@ -78,7 +78,7 @@ void main()
     vec2 uv = getUV(vertexIndex);
     vec4 normal = vec4(getNormal(vertexIndex), 0.0);
     vec3 tangent = normalize(getTangent(vertexIndex));
-    vec3 bitangent = normalize(cross(normal.xyz, tangent));
+    vec3 bitangent = normalize(cross(tangent, normal.xyz));
     mat3 TBNmat = mat3(tangent, bitangent, normal);
 
     gl_Position = pos;

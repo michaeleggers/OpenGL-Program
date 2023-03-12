@@ -149,6 +149,10 @@ int main(int argc, char** argv)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
+	if (SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24) != 0) {
+		printf("Could not set SDL GL Depth buffer precision to 32bits!\n");
+	}
+
 	SDL_Window* sdlWindow = SDL_CreateWindow("OpenGL Program", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 	if (!sdlWindow) {
 		printf("Could not create SDL2 window!\nSDL ERROR: %s\n", SDL_GetError());
@@ -161,6 +165,16 @@ int main(int argc, char** argv)
 		exit(-1);
 	}
 
+	// Try to get the current precision for the default depth buffer	
+	int depthSize = 0;
+	int getDepthSuccess = SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &depthSize);
+	if (getDepthSuccess != 0) {
+		printf("Could not get SDL GL Depth buffer precision\n");
+	}
+	else {
+		printf("SDL GL Depth Buffer size: %d\n", depthSize);
+	}
+
 	if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
 	{
 		printf("Failed to load OpenGL function pointers!\n");
@@ -168,7 +182,7 @@ int main(int argc, char** argv)
 	}
 
 	/* Vsync */
-	if (SDL_GL_SetSwapInterval(1) == -1) { // 0 = no vsync, 1 = vysnc on, -1 = adaptive vsync
+	if (SDL_GL_SetSwapInterval(1) != 0) { // 0 = no vsync, 1 = vysnc on, -1 = adaptive vsync
 		printf("Swap Interval not supported!\nSDL ERROR: %s\n", SDL_GetError());
 	}
 
@@ -179,7 +193,7 @@ int main(int argc, char** argv)
 	MaterialManager materialManager(basePath);
 
 	/* Load models */
-	Model spitfire = ImportModel(materialManager, basePath, "knight/", "knight.obj");	
+	Model spitfire = ImportModel(materialManager, basePath, "gun/gltf/", "gun.gltf");	
 
 	Vertex cube_vertices[] = {
 		// front 

@@ -12,4 +12,9 @@
     
     sampler2D albedo = sampler2D(in_Samplers[material.albedoID]);
   ```
-
+- On AMD GPUs one apparently has to call
+  ```c++
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  ```
+  Interestingly, 32bits will work on AMD GPUs but not on my Nvidia RTX2070,  so
+  I set it to 24.
